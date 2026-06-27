@@ -1,0 +1,24 @@
+using BookStore.Models;
+using BookStore.Repositories;
+
+namespace BookStore.Services;
+
+public class CustomerService
+{
+    private readonly InMemoryRepository<Customer> _repo = new();
+
+    public void RegisterCustomer(Customer customer)
+    {
+        if (string.IsNullOrWhiteSpace(customer.FirstName)) throw new ArgumentException("First name is required.");
+        if (string.IsNullOrWhiteSpace(customer.LastName))  throw new ArgumentException("Last name is required.");
+        if (string.IsNullOrWhiteSpace(customer.Email))     throw new ArgumentException("Email is required.");
+        if (!customer.Email.Contains('@'))                  throw new ArgumentException("Invalid email format.");
+        if (_repo.GetAll().Any(c => c.Email.Equals(customer.Email, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("A customer with this email already exists.");
+        _repo.Add(customer);
+    }
+
+    public Customer? GetById(int id) => _repo.GetById(id);
+    public IEnumerable<Customer> GetAll() => _repo.GetAll();
+    public bool Exists(int id) => _repo.Exists(id);
+}
