@@ -1,0 +1,38 @@
+using BookStore.Interfaces;
+
+namespace BookStore.Models;
+
+public abstract class BookBase : IBook
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Author { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+
+    private decimal _price;
+    public decimal Price
+    {
+        get => _price;
+        set
+        {
+            if (value <= 0) throw new ArgumentException("Price must be greater than zero.");
+            _price = value;
+        }
+    }
+
+    private int _stock;
+    public int Stock
+    {
+        get => _stock;
+        set
+        {
+            if (value < 0) throw new ArgumentException("Stock cannot be negative.");
+            _stock = value;
+        }
+    }
+
+    public abstract string Format { get; }
+
+    public override string ToString() =>
+        $"[{Id}] {Title} by {Author} | {Category} | {Format} | ${Price:F2} | Stock: {Stock}";
+}
