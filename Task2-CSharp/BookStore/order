@@ -1,0 +1,22 @@
+using BookStore.Interfaces;
+
+namespace BookStore.Models;
+
+public class OrderItem
+{
+    public int BookId { get; set; }
+    public string BookTitle { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public decimal PriceAtSale { get; set; }
+    public decimal LineTotal => Quantity * PriceAtSale;
+}
+
+public class Order : IEntity
+{
+    public int Id { get; set; }
+    public int CustomerId { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public DateTime OrderDate { get; set; } = DateTime.Now;
+    public List<OrderItem> Items { get; set; } = new();
+    public decimal Total => Items.Sum(i => i.LineTotal);
+}
