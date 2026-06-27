@@ -1,0 +1,18 @@
+namespace BookStore.Models;
+
+public class PaperbackBook : BookBase
+{
+    public override string Format => "Paperback";
+}
+
+public class EbookBook : BookBase
+{
+    public override string Format => "Ebook";
+    public string FileFormat { get; set; } = "PDF";
+}
+
+public class AudiobookBook : BookBase
+{
+    public override string Format => "Audiobook";
+    public double DurationHours { get; set; }
+}
