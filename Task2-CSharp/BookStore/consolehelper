@@ -1,0 +1,71 @@
+namespace BookStore.Extensions;
+
+public static class ConsoleHelper
+{
+    public static void PrintHeader(string title)
+    {
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine($"  ═══════════════════════════════════════");
+        Console.WriteLine($"   {title}");
+        Console.WriteLine($"  ═══════════════════════════════════════");
+        Console.ResetColor();
+    }
+
+    public static void PrintSuccess(string msg)
+    {
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"  ✔  {msg}");
+        Console.ResetColor();
+    }
+
+    public static void PrintError(string msg)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"  ✘  {msg}");
+        Console.ResetColor();
+    }
+
+    public static void PrintInfo(string msg)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"  ℹ  {msg}");
+        Console.ResetColor();
+    }
+
+    public static string ReadRequired(string prompt)
+    {
+        while (true)
+        {
+            Console.Write($"  {prompt}: ");
+            var input = Console.ReadLine()?.Trim() ?? string.Empty;
+            if (!string.IsNullOrEmpty(input)) return input;
+            PrintError("This field cannot be empty.");
+        }
+    }
+
+    public static int ReadInt(string prompt)
+    {
+        while (true)
+        {
+            Console.Write($"  {prompt}: ");
+            if (int.TryParse(Console.ReadLine(), out int val)) return val;
+            PrintError("Please enter a valid integer.");
+        }
+    }
+
+    public static decimal ReadDecimal(string prompt)
+    {
+        while (true)
+        {
+            Console.Write($"  {prompt}: ");
+            if (decimal.TryParse(Console.ReadLine(), out decimal val)) return val;
+            PrintError("Please enter a valid number.");
+        }
+    }
+}
+
+public static class DecimalExtensions
+{
+    public static string ToCurrency(this decimal value) => $"${value:F2}";
+}
