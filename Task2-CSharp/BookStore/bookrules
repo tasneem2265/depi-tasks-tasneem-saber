@@ -1,0 +1,36 @@
+using BookStore.Interfaces;
+
+namespace BookStore.Services;
+
+public class DiscountRule : IBookRule
+{
+    private readonly decimal _discountPercent;
+    public string RuleName => $"{_discountPercent}% Discount";
+
+    public DiscountRule(decimal discountPercent)
+    {
+        if (discountPercent <= 0 || discountPercent >= 100)
+            throw new ArgumentException("Discount must be between 0 and 100.");
+        _discountPercent = discountPercent;
+    }
+
+    public void Apply(IBook book)
+    {
+        book.Price = Math.Round(book.Price * (1 - _discountPercent / 100), 2);
+    }
+}
+
+public class PriceAdjustmentRule : IBookRule
+{
+    private readonly decimal _amount;
+    public string RuleName => $"Price Adjustment ({(_amount >= 0 ? "+" : "")}{_amount:F2})";
+
+    public PriceAdjustmentRule(decimal amount) => _amount = amount;
+
+    public void Apply(IBook book)
+    {
+        var newPrice = book.Price + _amount;
+        if (newPrice <= 0) throw new InvalidOperationException($"Adjustment would make price invalid for '{book.Title}'.");
+        book.Price = Math.Round(newPrice, 2);
+    }
+}
