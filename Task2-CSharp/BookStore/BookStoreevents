@@ -1,0 +1,17 @@
+using BookStore.Interfaces;
+
+namespace BookStore.Events;
+
+public class StockDepletedEventArgs : EventArgs
+{
+    public IBook Book { get; }
+    public StockDepletedEventArgs(IBook book) => Book = book;
+}
+
+public static class BookStoreEvents
+{
+    public static event EventHandler<StockDepletedEventArgs>? BookStockDepleted;
+
+    public static void RaiseStockDepleted(object sender, IBook book) =>
+        BookStockDepleted?.Invoke(sender, new StockDepletedEventArgs(book));
+}
