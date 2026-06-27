@@ -1,0 +1,44 @@
+using System.Text.Json;
+using BookStore.Interfaces;
+using BookStore.Models;
+
+namespace BookStore.Data;
+
+public class PersistenceData
+{
+    public List<PaperbackBook> Paperbacks { get; set; } = new();
+    public List<EbookBook> Ebooks { get; set; } = new();
+    public List<AudiobookBook> Audiobooks { get; set; } = new();
+    public List<Customer> Customers { get; set; } = new();
+    public List<Order> Orders { get; set; } = new();
+}
+
+public static class DataStore
+{
+    private static readonly string FilePath = "bookstore_data.json";
+    private static readonly JsonSerializerOptions _opts = new() { WriteIndented = true };
+
+    public static async Task SaveAsync(
+        IEnumerable<IBook> books,
+        IEnumerable<Customer> customers,
+        IEnumerable<Order> orders)
+    {
+        var data = new PersistenceData
+        {
+            Paperbacks  = books.OfType<PaperbackBook>().ToList(),
+            Ebooks      = books.OfType<EbookBook>().ToList(),
+            Audiobooks  = books.OfType<AudiobookBook>().ToList(),
+            Customers   = customers.ToList(),
+            Orders      = orders.ToList()
+        };
+        var json = JsonSerializer.Serialize(data, _opts);
+        await File.WriteAllTextAsync(FilePath, json);
+    }
+
+    public static async Task<PersistenceData?> LoadAsync()
+    {
+        if (!File.Exists(FilePath)) return null;
+        var json = await File.ReadAllTextAsync(FilePath);
+        return JsonSerializer.Deserialize<PersistenceData>(json, _opts);
+    }
+}
