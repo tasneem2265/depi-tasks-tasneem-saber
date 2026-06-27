@@ -1,0 +1,11 @@
+namespace BookStore.Interfaces;
+
+public interface IBook : IEntity
+{
+    string Title { get; set; }
+    string Author { get; set; }
+    string Category { get; set; }
+    decimal Price { get; set; }
+    int Stock { get; set; }
+    string Format { get; }
+}
