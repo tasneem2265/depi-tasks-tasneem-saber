@@ -1,0 +1,28 @@
+using BookStore.Interfaces;
+
+namespace BookStore.Repositories;
+
+public class InMemoryRepository<T> : IRepository<T> where T : IEntity
+{
+    private readonly List<T> _store = new();
+    private int _nextId = 1;
+
+    public T? GetById(int id) => _store.FirstOrDefault(e => e.Id == id);
+
+    public IEnumerable<T> GetAll() => _store.AsReadOnly();
+
+    public void Add(T entity)
+    {
+        entity.Id = _nextId++;
+        _store.Add(entity);
+    }
+
+    public void Remove(int id)
+    {
+        var entity = GetById(id);
+        if (entity is null) throw new KeyNotFoundException($"Entity with ID {id} not found.");
+        _store.Remove(entity);
+    }
+
+    public bool Exists(int id) => _store.Any(e => e.Id == id);
+}
