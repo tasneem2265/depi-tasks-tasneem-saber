@@ -1,0 +1,55 @@
+using BookStore.Events;
+using BookStore.Interfaces;
+using BookStore.Repositories;
+
+namespace BookStore.Services;
+
+public class BookService
+{
+    private readonly InMemoryRepository<IBook> _repo = new();
+
+    public void AddBook(IBook book)
+    {
+        if (string.IsNullOrWhiteSpace(book.Title))   throw new ArgumentException("Title is required.");
+        if (string.IsNullOrWhiteSpace(book.Author))  throw new ArgumentException("Author is required.");
+        if (string.IsNullOrWhiteSpace(book.Category))throw new ArgumentException("Category is required.");
+        _repo.Add(book);
+    }
+
+    public void RemoveBook(int id)
+    {
+        if (!_repo.Exists(id)) throw new KeyNotFoundException($"No book found with ID {id}.");
+        _repo.Remove(id);
+    }
+
+    public IBook? GetById(int id) => _repo.GetById(id);
+
+    public IEnumerable<IBook> GetAll() => _repo.GetAll();
+
+    public IEnumerable<IBook> Search(string term) =>
+        _repo.GetAll().Where(b =>
+            b.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+            b.Author.Contains(term, StringComparison.OrdinalIgnoreCase));
+
+    public IEnumerable<IBook> FilterByCategory(string category) =>
+        _repo.GetAll().Where(b => b.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
+
+    public IEnumerable<IBook> FilterByAuthor(string author) =>
+        _repo.GetAll().Where(b => b.Author.Contains(author, StringComparison.OrdinalIgnoreCase));
+
+    public IEnumerable<IBook> FilterByPriceRange(decimal min, decimal max) =>
+        _repo.GetAll().Where(b => b.Price >= min && b.Price <= max);
+
+    public void DeductStock(int bookId, int quantity)
+    {
+        var book = _repo.GetById(bookId) ?? throw new KeyNotFoundException($"Book ID {bookId} not found.");
+        if (book.Stock < quantity) throw new InvalidOperationException($"'{book.Title}' is out of stock or insufficient quantity.");
+        book.Stock -= quantity;
+        if (book.Stock == 0) BookStoreEvents.RaiseStockDepleted(this, book);
+    }
+
+    public void ApplyRule(IBookRule rule, IEnumerable<IBook> books)
+    {
+        foreach (var book in books) rule.Apply(book);
+    }
+}
