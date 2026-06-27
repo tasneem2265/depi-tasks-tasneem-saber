@@ -1,0 +1,73 @@
+using BookStore.Models;
+using BookStore.Repositories;
+
+namespace BookStore.Services;
+
+public class OrderService
+{
+    private readonly InMemoryRepository<Order> _repo = new();
+    private readonly BookService _bookService;
+    private readonly CustomerService _customerService;
+
+    public OrderService(BookService bookService, CustomerService customerService)
+    {
+        _bookService = bookService;
+        _customerService = customerService;
+    }
+
+    public Order PlaceOrder(int customerId, List<(int bookId, int quantity)> items)
+    {
+        var customer = _customerService.GetById(customerId)
+            ?? throw new KeyNotFoundException($"Customer ID {customerId} not found.");
+
+        if (items == null || items.Count == 0)
+            throw new ArgumentException("An order must have at least one item.");
+
+        var order = new Order { CustomerId = customerId, CustomerName = customer.FullName };
+
+        foreach (var (bookId, quantity) in items)
+        {
+            if (quantity <= 0) throw new ArgumentException("Quantity must be at least 1.");
+            var book = _bookService.GetById(bookId)
+                ?? throw new KeyNotFoundException($"Book ID {bookId} not found.");
+            _bookService.DeductStock(bookId, quantity);
+            order.Items.Add(new OrderItem
+            {
+                BookId      = bookId,
+                BookTitle   = book.Title,
+                Quantity    = quantity,
+                PriceAtSale = book.Price
+            });
+        }
+
+        _repo.Add(order);
+        return order;
+    }
+
+    public IEnumerable<Order> GetAll() => _repo.GetAll();
+    public IEnumerable<Order> GetByCustomer(int customerId) =>
+        _repo.GetAll().Where(o => o.CustomerId == customerId);
+
+    public decimal GetTotalRevenue() => _repo.GetAll().Sum(o => o.Total);
+
+    public (string title, int sold) GetBestSellingBook()
+    {
+        var result = _repo.GetAll()
+            .SelectMany(o => o.Items)
+            .GroupBy(i => i.BookTitle)
+            .Select(g => (title: g.Key, sold: g.Sum(i => i.Quantity)))
+            .OrderByDescending(x => x.sold)
+            .FirstOrDefault();
+        return result == default ? ("N/A", 0) : result;
+    }
+
+    public (string name, decimal spent) GetTopCustomer()
+    {
+        var result = _repo.GetAll()
+            .GroupBy(o => o.CustomerName)
+            .Select(g => (name: g.Key, spent: g.Sum(o => o.Total)))
+            .OrderByDescending(x => x.spent)
+            .FirstOrDefault();
+        return result == default ? ("N/A", 0) : result;
+    }
+}
