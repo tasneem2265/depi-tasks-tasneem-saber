@@ -1,0 +1,7 @@
+namespace BookStore.Interfaces;
+
+public interface IBookRule
+{
+    string RuleName { get; }
+    void Apply(IBook book);
+}
