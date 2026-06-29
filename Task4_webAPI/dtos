@@ -1,0 +1,108 @@
+namespace BookStoreAPI.Models.DTOs;
+
+
+public record RegisterRequest(
+    string FirstName,
+    string LastName,
+    string Email,
+    string Password,
+    string? City = null
+);
+
+public record LoginRequest(string Email, string Password);
+
+public record AuthResponse(
+    string Token,
+    string Email,
+    string FullName,
+    string Role,
+    DateTime ExpiresAt
+);
+
+
+public record AuthorDto(int Id, string FirstName, string LastName, string? Bio);
+public record AuthorUpsertRequest(string FirstName, string LastName, string? 
+
+public record CategoryDto(int Id, string Name);
+public record CategoryUpsertRequest(string Name);
+
+
+public record BookDto(
+    int     Id,
+    string  Title,
+    string  Format,
+    decimal Price,
+    int     Stock,
+    string  Author,
+    string  Category
+);
+
+public record BookDetailDto(
+    int       Id,
+    string    Title,
+    string    Format,
+    decimal   Price,
+    int       Stock,
+    AuthorDto Author,
+    CategoryDto Category
+);
+
+public record BookCreateRequest(
+    string  Title,
+    string  Format,
+    decimal Price,
+    int     Stock,
+    int     AuthorId,
+    int     CategoryId
+);
+
+public record BookUpdateRequest(
+    string  Title,
+    string  Format,
+    decimal Price,
+    int     Stock,
+    int     AuthorId,
+    int     CategoryId
+);
+
+public record BookFilterRequest(
+    string? Category   = null,
+    string? Author     = null,
+    decimal? MinPrice  = null,
+    decimal? MaxPrice  = null,
+    string? Search     = null,
+    int Page           = 1,
+    int PageSize       = 10
+);
+
+public record OrderItemRequest(int BookId, int Quantity);
+
+public record PlaceOrderRequest(List<OrderItemRequest> Items);
+
+public record OrderItemDto(
+    int     BookId,
+    string  BookTitle,
+    int     Quantity,
+    decimal PriceAtSale,
+    decimal LineTotal
+);
+
+public record OrderDto(
+    int              Id,
+    DateTime         OrderDate,
+    string           CustomerName,
+    List<OrderItemDto> Items,
+    decimal          Total
+);
+
+
+public record PagedResult<T>(
+    IEnumerable<T> Items,
+    int TotalCount,
+    int Page,
+    int PageSize,
+    int TotalPages
+);
+
+
+public record ApiError(string Message, IEnumerable<string>? Details = null);
