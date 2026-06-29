@@ -18,11 +18,11 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 
-// ── Database ─────────────────────────────────────────────────
+
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("BookStoreDb")));
 
-// ── Identity ─────────────────────────────────────────────────
+
 builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
 {
     opt.Password.RequiredLength         = 8;
@@ -34,7 +34,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// ── JWT Authentication ────────────────────────────────────────
+
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(opt =>
 {
@@ -55,7 +55,7 @@ builder.Services.AddAuthentication(opt =>
     };
 });
 
-// ── CORS (Task 11) ────────────────────────────────────────────
+
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()!;
 builder.Services.AddCors(opt => opt.AddPolicy("FrontendPolicy", policy =>
     policy.WithOrigins(allowedOrigins)
@@ -63,12 +63,12 @@ builder.Services.AddCors(opt => opt.AddPolicy("FrontendPolicy", policy =>
           .AllowAnyMethod()
           .AllowCredentials()));
 
-// ── Services (DI — Task 14) ───────────────────────────────────
+
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IBookService,  BookService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
-// ── Controllers + Validation (Task 7) ────────────────────────
+
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(opt =>
     {
@@ -82,7 +82,7 @@ builder.Services.AddControllers()
         };
     });
 
-// ── Swagger with JWT support (Task 10) ───────────────────────
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -121,7 +121,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ── Seed DB on startup ────────────────────────────────────────
+
 using (var scope = app.Services.CreateScope())
 {
     var db          = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -130,8 +130,8 @@ using (var scope = app.Services.CreateScope())
     await DbSeeder.SeedAsync(db, userManager, roleManager);
 }
 
-// ── Middleware Pipeline ───────────────────────────────────────
-app.UseMiddleware<GlobalExceptionMiddleware>();  // Task 12
+
+app.UseMiddleware<GlobalExceptionMiddleware>();  
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
