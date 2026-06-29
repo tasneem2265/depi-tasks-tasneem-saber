@@ -33,7 +33,7 @@ await db.Database.MigrateAsync();
 await DbSeeder.SeedAsync(db);
 
 Console.WriteLine("═══════════════════════════════════════════");
-Console.WriteLine("   📚  BookStore EF Core — Query Runner");
+Console.WriteLine("     BookStore EF Core — Query Runner");
 Console.WriteLine("═══════════════════════════════════════════\n");
 
 // Task 4: Books with category and author
@@ -107,4 +107,4 @@ Console.WriteLine("\n── Task 15: Read-only (AsNoTracking) ──");
 var readOnly = await bookSvc.GetBooksReadOnlyAsync();
 Console.WriteLine($"  Loaded {readOnly.Count} books without change tracking.");
 
-Console.WriteLine("\n✔  All tasks completed successfully!");
+Console.WriteLine("\n  All tasks completed successfully!");
