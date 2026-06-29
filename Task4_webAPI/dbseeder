@@ -1,0 +1,75 @@
+using BookStoreAPI.Models.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
+namespace BookStoreAPI.Data;
+
+public static class DbSeeder
+{
+    public static async Task SeedAsync(AppDbContext db, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
+    {
+        await db.Database.MigrateAsync();
+
+        // Roles
+        foreach (var role in new[] { "Admin", "Customer" })
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+
+        // Admin user
+        const string adminEmail = "admin@bookstore.com";
+        if (await userManager.FindByEmailAsync(adminEmail) is null)
+        {
+            var admin = new AppUser
+            {
+                UserName  = adminEmail,
+                Email     = adminEmail,
+                FirstName = "Super",
+                LastName  = "Admin",
+                EmailConfirmed = true
+            };
+            await userManager.CreateAsync(admin, "Admin@123456");
+            await userManager.AddToRoleAsync(admin, "Admin");
+        }
+
+        if (await db.Authors.AnyAsync()) return;
+
+        var authors = new List<Author>
+        {
+            new() { FirstName = "Robert",  LastName = "Martin",   Bio = "Author of Clean Code." },
+            new() { FirstName = "Martin",  LastName = "Fowler",   Bio = "Author on software design." },
+            new() { FirstName = "Yuval",   LastName = "Harari",   Bio = "Author of Sapiens." },
+            new() { FirstName = "George",  LastName = "Orwell",   Bio = "Author of 1984." },
+            new() { FirstName = "Frank",   LastName = "Herbert",  Bio = "Author of Dune." },
+            new() { FirstName = "Agatha",  LastName = "Christie", Bio = "Queen of crime fiction." },
+            new() { FirstName = "Malcolm", LastName = "Gladwell", Bio = "Author of Outliers." },
+        };
+        await db.Authors.AddRangeAsync(authors);
+
+        var categories = new List<Category>
+        {
+            new() { Name = "Software Engineering" },
+            new() { Name = "Architecture & Design" },
+            new() { Name = "History" },
+            new() { Name = "Science Fiction" },
+            new() { Name = "Mystery" },
+            new() { Name = "Psychology & Behavior" },
+        };
+        await db.Categories.AddRangeAsync(categories);
+        await db.SaveChangesAsync();
+
+        var books = new List<Book>
+        {
+            new() { Title="Clean Code",                   AuthorId=authors[0].Id, CategoryId=categories[0].Id, Price=39.99m, Stock=50, Format="Paperback" },
+            new() { Title="The Clean Coder",              AuthorId=authors[0].Id, CategoryId=categories[0].Id, Price=34.99m, Stock=30, Format="Paperback" },
+            new() { Title="Refactoring",                  AuthorId=authors[1].Id, CategoryId=categories[1].Id, Price=44.99m, Stock=25, Format="Ebook" },
+            new() { Title="Sapiens",                      AuthorId=authors[2].Id, CategoryId=categories[2].Id, Price=18.99m, Stock=60, Format="Audiobook" },
+            new() { Title="1984",                         AuthorId=authors[3].Id, CategoryId=categories[3].Id, Price=12.99m, Stock=80, Format="Paperback" },
+            new() { Title="Dune",                         AuthorId=authors[4].Id, CategoryId=categories[3].Id, Price=14.99m, Stock=55, Format="Paperback" },
+            new() { Title="Murder on the Orient Express", AuthorId=authors[5].Id, CategoryId=categories[4].Id, Price=11.99m, Stock=50, Format="Paperback" },
+            new() { Title="The Tipping Point",            AuthorId=authors[6].Id, CategoryId=categories[5].Id, Price=13.99m, Stock=35, Format="Ebook" },
+            new() { Title="Outliers",                     AuthorId=authors[6].Id, CategoryId=categories[5].Id, Price=12.99m, Stock=40, Format="Audiobook" },
+        };
+        await db.Books.AddRangeAsync(books);
+        await db.SaveChangesAsync();
+    }
+}
