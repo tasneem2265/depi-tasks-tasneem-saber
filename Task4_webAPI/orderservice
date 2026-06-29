@@ -1,0 +1,100 @@
+using BookStoreAPI.Data;
+using BookStoreAPI.Models.DTOs;
+using BookStoreAPI.Models.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace BookStoreAPI.Services;
+
+public interface IOrderService
+{
+    Task<OrderDto>        PlaceOrderAsync(string userId, PlaceOrderRequest req);
+    Task<List<OrderDto>>  GetMyOrdersAsync(string userId);
+    Task<List<OrderDto>>  GetAllOrdersAsync();
+}
+
+public class OrderService : IOrderService
+{
+    private readonly AppDbContext _db;
+    private readonly ILogger<OrderService> _logger;
+
+    public OrderService(AppDbContext db, ILogger<OrderService> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
+
+    public async Task<OrderDto> PlaceOrderAsync(string userId, PlaceOrderRequest req)
+    {
+        if (req.Items is null || req.Items.Count == 0)
+            throw new ArgumentException("Order must contain at least one item.");
+
+        var order = new Order { UserId = userId, Items = new List<OrderItem>() };
+
+        foreach (var item in req.Items)
+        {
+            if (item.Quantity <= 0)
+                throw new ArgumentException($"Quantity for book ID {item.BookId} must be at least 1.");
+
+            var book = await _db.Books.FindAsync(item.BookId)
+                ?? throw new KeyNotFoundException($"Book ID {item.BookId} not found.");
+
+            if (book.Stock < item.Quantity)
+                throw new InvalidOperationException($"'{book.Title}' has insufficient stock ({book.Stock} available).");
+
+            book.Stock -= item.Quantity;
+            order.Items.Add(new OrderItem
+            {
+                BookId      = book.Id,
+                Quantity    = item.Quantity,
+                PriceAtSale = book.Price
+            });
+        }
+
+        _db.Orders.Add(order);
+        await _db.SaveChangesAsync();
+
+        await _db.Entry(order).Reference(o => o.AppUser).LoadAsync();
+        foreach (var i in order.Items)
+            await _db.Entry(i).Reference(x => x.Book).LoadAsync();
+
+        _logger.LogInformation("Order #{Id} placed by user {UserId}", order.Id, userId);
+        return MapOrder(order);
+    }
+
+    public async Task<List<OrderDto>> GetMyOrdersAsync(string userId)
+    {
+        var orders = await _db.Orders.AsNoTracking()
+            .Include(o => o.AppUser)
+            .Include(o => o.Items).ThenInclude(i => i.Book)
+            .Where(o => o.UserId == userId)
+            .OrderByDescending(o => o.OrderDate)
+            .ToListAsync();
+
+        return orders.Select(MapOrder).ToList();
+    }
+
+    public async Task<List<OrderDto>> GetAllOrdersAsync()
+    {
+        var orders = await _db.Orders.AsNoTracking()
+            .Include(o => o.AppUser)
+            .Include(o => o.Items).ThenInclude(i => i.Book)
+            .OrderByDescending(o => o.OrderDate)
+            .ToListAsync();
+
+        return orders.Select(MapOrder).ToList();
+    }
+
+    private static OrderDto MapOrder(Order o) => new(
+        o.Id,
+        o.OrderDate,
+        o.AppUser?.FullName ?? "Unknown",
+        o.Items.Select(i => new OrderItemDto(
+            i.BookId,
+            i.Book?.Title ?? "Unknown",
+            i.Quantity,
+            i.PriceAtSale,
+            i.Quantity * i.PriceAtSale
+        )).ToList(),
+        o.Items.Sum(i => i.Quantity * i.PriceAtSale)
+    );
+}
