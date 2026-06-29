@@ -10,12 +10,12 @@ public static class DbSeeder
     {
         await db.Database.MigrateAsync();
 
-        // Roles
+        
         foreach (var role in new[] { "Admin", "Customer" })
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));
 
-        // Admin user
+        
         const string adminEmail = "admin@bookstore.com";
         if (await userManager.FindByEmailAsync(adminEmail) is null)
         {
