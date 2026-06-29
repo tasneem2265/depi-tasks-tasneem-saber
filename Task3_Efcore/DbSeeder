@@ -1,0 +1,133 @@
+using BookStoreEF.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace BookStoreEF.Data;
+
+public static class DbSeeder
+{
+    public static async Task SeedAsync(BookStoreContext db)
+    {
+        if (await db.Authors.AnyAsync()) return;
+
+        var authors = new List<Author>
+        {
+            new() { FirstName = "Robert",  LastName = "Martin",   Bio = "Author of Clean Code." },
+            new() { FirstName = "Martin",  LastName = "Fowler",   Bio = "Author on software design." },
+            new() { FirstName = "Andrew",  LastName = "Hunt",     Bio = "Co-author of The Pragmatic Programmer." },
+            new() { FirstName = "Eric",    LastName = "Evans",    Bio = "Author of Domain-Driven Design." },
+            new() { FirstName = "Erich",   LastName = "Gamma",    Bio = "Co-author of Design Patterns." },
+            new() { FirstName = "Yuval",   LastName = "Harari",   Bio = "Author of Sapiens." },
+            new() { FirstName = "George",  LastName = "Orwell",   Bio = "Author of 1984." },
+            new() { FirstName = "Frank",   LastName = "Herbert",  Bio = "Author of Dune." },
+            new() { FirstName = "Agatha",  LastName = "Christie", Bio = "Queen of crime fiction." },
+            new() { FirstName = "Malcolm", LastName = "Gladwell", Bio = "Author of The Tipping Point." },
+            new() { FirstName = "Nassim",  LastName = "Taleb",    Bio = "Author of The Black Swan." },
+        };
+        await db.Authors.AddRangeAsync(authors);
+
+        var categories = new List<Category>
+        {
+            new() { Name = "Software Engineering" },
+            new() { Name = "Architecture & Design" },
+            new() { Name = "History" },
+            new() { Name = "Science Fiction" },
+            new() { Name = "Mystery" },
+            new() { Name = "Science & Physics" },
+            new() { Name = "Psychology & Behavior" },
+        };
+        await db.Categories.AddRangeAsync(categories);
+        await db.SaveChangesAsync();
+
+        var sw = categories[0]; var ar = categories[1]; var hi = categories[2];
+        var sf = categories[3]; var my = categories[4]; var sc = categories[5]; var ps = categories[6];
+
+        var books = new List<Book>
+        {
+            new() { Title="Clean Code",                   Author=authors[0],  Category=sw, Price=39.99m, Stock=50, Format="Paperback" },
+            new() { Title="The Clean Coder",              Author=authors[0],  Category=sw, Price=34.99m, Stock=30, Format="Paperback" },
+            new() { Title="Refactoring",                  Author=authors[1],  Category=ar, Price=44.99m, Stock=25, Format="Paperback" },
+            new() { Title="Patterns of Enterprise App",   Author=authors[1],  Category=ar, Price=49.99m, Stock=20, Format="Ebook" },
+            new() { Title="The Pragmatic Programmer",     Author=authors[2],  Category=sw, Price=42.99m, Stock=40, Format="Paperback" },
+            new() { Title="Domain-Driven Design",         Author=authors[3],  Category=ar, Price=47.99m, Stock=15, Format="Ebook" },
+            new() { Title="Design Patterns",              Author=authors[4],  Category=ar, Price=52.99m, Stock=10, Format="Paperback" },
+            new() { Title="Sapiens",                      Author=authors[5],  Category=hi, Price=18.99m, Stock=60, Format="Audiobook" },
+            new() { Title="Homo Deus",                    Author=authors[5],  Category=hi, Price=17.99m, Stock=45, Format="Paperback" },
+            new() { Title="21 Lessons for the 21st Century", Author=authors[5], Category=hi, Price=16.99m, Stock=35, Format="Ebook" },
+            new() { Title="1984",                         Author=authors[6],  Category=sf, Price=12.99m, Stock=80, Format="Paperback" },
+            new() { Title="Animal Farm",                  Author=authors[6],  Category=sf, Price=9.99m,  Stock=70, Format="Paperback" },
+            new() { Title="Dune",                         Author=authors[7],  Category=sf, Price=14.99m, Stock=55, Format="Paperback" },
+            new() { Title="Dune Messiah",                 Author=authors[7],  Category=sf, Price=13.99m, Stock=40, Format="Ebook" },
+            new() { Title="Murder on the Orient Express", Author=authors[8],  Category=my, Price=11.99m, Stock=50, Format="Paperback" },
+            new() { Title="And Then There Were None",     Author=authors[8],  Category=my, Price=10.99m, Stock=60, Format="Paperback" },
+            new() { Title="Death on the Nile",            Author=authors[8],  Category=my, Price=11.49m, Stock=45, Format="Ebook" },
+            new() { Title="The Tipping Point",            Author=authors[9],  Category=ps, Price=13.99m, Stock=35, Format="Paperback" },
+            new() { Title="Outliers",                     Author=authors[9],  Category=ps, Price=12.99m, Stock=40, Format="Audiobook" },
+            new() { Title="Blink",                        Author=authors[9],  Category=ps, Price=11.99m, Stock=30, Format="Paperback" },
+            new() { Title="The Black Swan",               Author=authors[10], Category=ps, Price=17.99m, Stock=22, Format="Ebook" },
+            new() { Title="Antifragile",                  Author=authors[10], Category=ps, Price=19.99m, Stock=18, Format="Paperback" },
+            new() { Title="Skin in the Game",             Author=authors[10], Category=ps, Price=18.49m, Stock=14, Format="Ebook" },
+            new() { Title="Fooled by Randomness",         Author=authors[10], Category=ps, Price=16.99m, Stock=12, Format="Paperback" },
+        };
+        await db.Books.AddRangeAsync(books);
+
+        var customers = new List<Customer>
+        {
+            new() { FirstName="Ahmed",   LastName="Hassan",  Email="ahmed@email.com",   City="Cairo" },
+            new() { FirstName="Sara",    LastName="Mohamed", Email="sara@email.com",    City="Alexandria" },
+            new() { FirstName="Omar",    LastName="Ali",     Email="omar@email.com",    City="Cairo" },
+            new() { FirstName="Nour",    LastName="Ibrahim", Email="nour@email.com",    City="Giza" },
+            new() { FirstName="Karim",   LastName="Mahmoud", Email="karim@email.com",   City="Cairo" },
+            new() { FirstName="Ziad",    LastName="Fathi",   Email="ziad@email.com",    City="Luxor" },
+        };
+        await db.Customers.AddRangeAsync(customers);
+        await db.SaveChangesAsync();
+
+        var orders = new List<Order>
+        {
+            new() { Customer=customers[0], OrderDate=new DateTime(2025,1,5),
+                Items = new List<OrderItem>
+                {
+                    new() { Book=books[0], Quantity=2, PriceAtSale=39.99m },
+                    new() { Book=books[7], Quantity=1, PriceAtSale=18.99m },
+                }
+            },
+            new() { Customer=customers[0], OrderDate=new DateTime(2025,2,14),
+                Items = new List<OrderItem>
+                {
+                    new() { Book=books[10], Quantity=1, PriceAtSale=12.99m },
+                    new() { Book=books[12], Quantity=1, PriceAtSale=14.99m },
+                }
+            },
+            new() { Customer=customers[1], OrderDate=new DateTime(2025,1,10),
+                Items = new List<OrderItem>
+                {
+                    new() { Book=books[2],  Quantity=1, PriceAtSale=44.99m },
+                    new() { Book=books[14], Quantity=2, PriceAtSale=11.99m },
+                }
+            },
+            new() { Customer=customers[2], OrderDate=new DateTime(2025,1,20),
+                Items = new List<OrderItem>
+                {
+                    new() { Book=books[6], Quantity=1, PriceAtSale=52.99m },
+                    new() { Book=books[5], Quantity=1, PriceAtSale=47.99m },
+                }
+            },
+            new() { Customer=customers[3], OrderDate=new DateTime(2025,2,1),
+                Items = new List<OrderItem>
+                {
+                    new() { Book=books[4],  Quantity=1, PriceAtSale=42.99m },
+                    new() { Book=books[17], Quantity=1, PriceAtSale=13.99m },
+                }
+            },
+            new() { Customer=customers[4], OrderDate=new DateTime(2025,3,1),
+                Items = new List<OrderItem>
+                {
+                    new() { Book=books[20], Quantity=1, PriceAtSale=17.99m },
+                    new() { Book=books[21], Quantity=2, PriceAtSale=19.99m },
+                }
+            },
+        };
+        await db.Orders.AddRangeAsync(orders);
+        await db.SaveChangesAsync();
+    }
+}
