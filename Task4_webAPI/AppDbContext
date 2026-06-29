@@ -1,0 +1,64 @@
+using BookStoreAPI.Models.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace BookStoreAPI.Data;
+
+public class AppDbContext : IdentityDbContext<AppUser>
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    public DbSet<Author>    Authors    => Set<Author>();
+    public DbSet<Category>  Categories => Set<Category>();
+    public DbSet<Book>      Books      => Set<Book>();
+    public DbSet<Order>     Orders     => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
+    protected override void OnModelCreating(ModelBuilder mb)
+    {
+        base.OnModelCreating(mb);
+
+        mb.Entity<Category>(e =>
+        {
+            e.HasIndex(c => c.Name).IsUnique();
+            e.HasMany(c => c.Books)
+             .WithOne(b => b.Category)
+             .HasForeignKey(b => b.CategoryId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        mb.Entity<Book>(e =>
+        {
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_Books_Price", "[Price] > 0");
+                t.HasCheckConstraint("CK_Books_Stock", "[Stock] >= 0");
+            });
+            e.HasOne(b => b.Author)
+             .WithMany(a => a.Books)
+             .HasForeignKey(b => b.AuthorId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        mb.Entity<Order>(e =>
+        {
+            e.HasOne(o => o.AppUser)
+             .WithMany(u => u.Orders)
+             .HasForeignKey(o => o.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        mb.Entity<OrderItem>(e =>
+        {
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_OrderItems_Qty",   "[Quantity] >= 1");
+                t.HasCheckConstraint("CK_OrderItems_Price", "[PriceAtSale] > 0");
+            });
+            e.HasOne(i => i.Book)
+             .WithMany(b => b.OrderItems)
+             .HasForeignKey(i => i.BookId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+}
