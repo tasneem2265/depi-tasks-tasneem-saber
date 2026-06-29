@@ -1,0 +1,113 @@
+using BookStoreEF.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace BookStoreEF.Data;
+
+public class BookStoreContext : DbContext
+{
+    public DbSet<Author>    Authors    => Set<Author>();
+    public DbSet<Category>  Categories => Set<Category>();
+    public DbSet<Book>      Books      => Set<Book>();
+    public DbSet<Customer>  Customers  => Set<Customer>();
+    public DbSet<Order>     Orders     => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
+    public BookStoreContext(DbContextOptions<BookStoreContext> options) : base(options) { }
+
+    protected override void OnModelCreating(ModelBuilder mb)
+    {
+        // ── Author ──────────────────────────────────────────
+        mb.Entity<Author>(e =>
+        {
+            e.HasKey(a => a.Id);
+            e.Property(a => a.FirstName).IsRequired().HasMaxLength(100);
+            e.Property(a => a.LastName).IsRequired().HasMaxLength(100);
+            e.Ignore(a => a.FullName);
+        });
+
+        // ── Category ─────────────────────────────────────────
+        mb.Entity<Category>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Name).IsRequired().HasMaxLength(100);
+            e.HasIndex(c => c.Name).IsUnique();
+
+            // Deleting a category must NOT break existing books (Task 1 rule)
+            e.HasMany(c => c.Books)
+             .WithOne(b => b.Category)
+             .HasForeignKey(b => b.CategoryId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── Book ─────────────────────────────────────────────
+        mb.Entity<Book>(e =>
+        {
+            e.HasKey(b => b.Id);
+            e.Property(b => b.Title).IsRequired().HasMaxLength(255);
+            e.Property(b => b.Format).IsRequired().HasMaxLength(50).HasDefaultValue("Paperback");
+            e.Property(b => b.Price).HasColumnType("decimal(10,2)").IsRequired();
+            e.Property(b => b.Stock).IsRequired();
+
+            // Price > 0 and Stock >= 0 enforced at DB level
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_Books_Price", "[Price] > 0");
+                t.HasCheckConstraint("CK_Books_Stock", "[Stock] >= 0");
+            });
+
+            e.HasOne(b => b.Author)
+             .WithMany(a => a.Books)
+             .HasForeignKey(b => b.AuthorId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── Customer ─────────────────────────────────────────
+        mb.Entity<Customer>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.FirstName).IsRequired().HasMaxLength(100);
+            e.Property(c => c.LastName).IsRequired().HasMaxLength(100);
+            e.Property(c => c.Email).IsRequired().HasMaxLength(255);
+            e.HasIndex(c => c.Email).IsUnique();   // unique email (Task 1 rule)
+            e.Ignore(c => c.FullName);
+        });
+
+        // ── Order ────────────────────────────────────────────
+        mb.Entity<Order>(e =>
+        {
+            e.HasKey(o => o.Id);
+            e.Ignore(o => o.Total);
+
+            e.HasOne(o => o.Customer)
+             .WithMany(c => c.Orders)
+             .HasForeignKey(o => o.CustomerId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── OrderItem ────────────────────────────────────────
+        mb.Entity<OrderItem>(e =>
+        {
+            e.HasKey(i => i.Id);
+            e.Property(i => i.PriceAtSale).HasColumnType("decimal(10,2)").IsRequired();
+            e.Ignore(i => i.LineTotal);
+
+            // PriceAtSale locks historical price — never updated after insert
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_OrderItems_Qty",   "[Quantity] >= 1");
+                t.HasCheckConstraint("CK_OrderItems_Price", "[PriceAtSale] > 0");
+            });
+
+            e.HasOne(i => i.Order)
+             .WithMany(o => o.Items)
+             .HasForeignKey(i => i.OrderId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            // Deleting a book must NOT break old sale records (Task 1 rule)
+            e.HasOne(i => i.Book)
+             .WithMany(b => b.OrderItems)
+             .HasForeignKey(i => i.BookId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+}
