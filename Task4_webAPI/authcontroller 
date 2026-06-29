@@ -1,0 +1,87 @@
+using BookStoreAPI.Models.DTOs;
+using BookStoreAPI.Models.Entities;
+using BookStoreAPI.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BookStoreAPI.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Produces("application/json")]
+public class AuthController : ControllerBase
+{
+    private readonly UserManager<AppUser>  _userManager;
+    private readonly SignInManager<AppUser> _signInManager;
+    private readonly ITokenService         _tokenService;
+    private readonly ILogger<AuthController> _logger;
+    private readonly IConfiguration        _config;
+
+    public AuthController(
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager,
+        ITokenService tokenService,
+        ILogger<AuthController> logger,
+        IConfiguration config)
+    {
+        _userManager   = userManager;
+        _signInManager = signInManager;
+        _tokenService  = tokenService;
+        _logger        = logger;
+        _config        = config;
+    }
+
+    /// <summary>Register a new customer account.</summary>
+    [HttpPost("register")]
+    [ProducesResponseType(typeof(AuthResponse), 201)]
+    [ProducesResponseType(typeof(ApiError), 400)]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest req)
+    {
+        var user = new AppUser
+        {
+            UserName  = req.Email,
+            Email     = req.Email,
+            FirstName = req.FirstName,
+            LastName  = req.LastName,
+            City      = req.City,
+            EmailConfirmed = true
+        };
+
+        var result = await _userManager.CreateAsync(user, req.Password);
+        if (!result.Succeeded)
+            return BadRequest(new ApiError("Registration failed.", result.Errors.Select(e => e.Description)));
+
+        await _userManager.AddToRoleAsync(user, "Customer");
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = _tokenService.GenerateToken(user, roles);
+        var expiry = DateTime.UtcNow.AddMinutes(double.Parse(_config["Jwt:ExpiryInMinutes"]!));
+
+        _logger.LogInformation("New customer registered: {Email}", req.Email);
+        return CreatedAtAction(nameof(Register), new AuthResponse(token, user.Email!, user.FullName, "Customer", expiry));
+    }
+
+    /// <summary>Login and receive a JWT token.</summary>
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(AuthResponse), 200)]
+    [ProducesResponseType(typeof(ApiError), 401)]
+    public async Task<IActionResult> Login([FromBody] LoginRequest req)
+    {
+        var user = await _userManager.FindByEmailAsync(req.Email);
+        if (user is null)
+            return Unauthorized(new ApiError("Invalid email or password."));
+
+        var result = await _signInManager.CheckPasswordSignInAsync(user, req.Password, lockoutOnFailure: false);
+        if (!result.Succeeded)
+        {
+            _logger.LogWarning("Failed login attempt for {Email}", req.Email);
+            return Unauthorized(new ApiError("Invalid email or password."));
+        }
+
+        var roles  = await _userManager.GetRolesAsync(user);
+        var token  = _tokenService.GenerateToken(user, roles);
+        var expiry = DateTime.UtcNow.AddMinutes(double.Parse(_config["Jwt:ExpiryInMinutes"]!));
+
+        _logger.LogInformation("User logged in: {Email} | Role: {Role}", req.Email, string.Join(",", roles));
+        return Ok(new AuthResponse(token, user.Email!, user.FullName, roles.FirstOrDefault() ?? "Customer", expiry));
+    }
+}
