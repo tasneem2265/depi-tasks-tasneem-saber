@@ -1,0 +1,150 @@
+using BookStoreEF.Data;
+using BookStoreEF.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace BookStoreEF.Queries;
+
+public class BookStoreQueries
+{
+    private readonly BookStoreContext _db;
+
+    public BookStoreQueries(BookStoreContext db) => _db = db;
+
+    // ── Task 4: Books with category and author in ONE query (no N+1) ──────────
+    public async Task<List<object>> GetBooksWithCategoryAndAuthorAsync()
+    {
+        return await _db.Books
+            .AsNoTracking()
+            .Include(b => b.Author)
+            .Include(b => b.Category)
+            .Select(b => new
+            {
+                b.Id,
+                b.Title,
+                b.Format,
+                b.Price,
+                b.Stock,
+                Author   = b.Author.FirstName + " " + b.Author.LastName,
+                Category = b.Category.Name
+            })
+            .OrderBy(b => b.Title)
+            .Cast<object>()
+            .ToListAsync();
+    }
+
+    // ── Task 5: Top 5 best-selling books ─────────────────────────────────────
+    public async Task<List<object>> GetTop5BestSellingAsync()
+    {
+        return await _db.OrderItems
+            .AsNoTracking()
+            .GroupBy(i => new { i.BookId, i.Book.Title })
+            .Select(g => new
+            {
+                g.Key.Title,
+                TotalSold = g.Sum(i => i.Quantity)
+            })
+            .OrderByDescending(x => x.TotalSold)
+            .Take(5)
+            .Cast<object>()
+            .ToListAsync();
+    }
+
+    // ── Task 6: Every customer with purchase count ────────────────────────────
+    public async Task<List<object>> GetCustomerPurchaseCountAsync()
+    {
+        return await _db.Customers
+            .AsNoTracking()
+            .Select(c => new
+            {
+                Name          = c.FirstName + " " + c.LastName,
+                c.Email,
+                PurchaseCount = c.Orders.Count
+            })
+            .OrderByDescending(x => x.PurchaseCount)
+            .Cast<object>()
+            .ToListAsync();
+    }
+
+    // ── Task 7: Categories with more than 5 books ─────────────────────────────
+    public async Task<List<object>> GetCategoriesWithMoreThan5BooksAsync()
+    {
+        return await _db.Categories
+            .AsNoTracking()
+            .Where(c => c.Books.Count > 5)
+            .Select(c => new { Category = c.Name, BookCount = c.Books.Count })
+            .OrderByDescending(x => x.BookCount)
+            .Cast<object>()
+            .ToListAsync();
+    }
+
+    // ── Task 8: Books above average price ────────────────────────────────────
+    public async Task<List<object>> GetBooksAboveAveragePriceAsync()
+    {
+        var avg = await _db.Books.AsNoTracking().AverageAsync(b => b.Price);
+
+        return await _db.Books
+            .AsNoTracking()
+            .Where(b => b.Price > avg)
+            .Select(b => new { b.Title, b.Price })
+            .OrderByDescending(b => b.Price)
+            .Cast<object>()
+            .ToListAsync();
+    }
+
+    // ── Task 9: Customers who never made a purchase ───────────────────────────
+    public async Task<List<object>> GetCustomersWithNoPurchasesAsync()
+    {
+        return await _db.Customers
+            .AsNoTracking()
+            .Where(c => !c.Orders.Any())
+            .Select(c => new { Name = c.FirstName + " " + c.LastName, c.Email })
+            .Cast<object>()
+            .ToListAsync();
+    }
+
+    // ── Task 10: Total revenue grouped by month ───────────────────────────────
+    public async Task<List<object>> GetMonthlyRevenueAsync()
+    {
+        return await _db.Orders
+            .AsNoTracking()
+            .SelectMany(o => o.Items, (o, i) => new { o.OrderDate, i.Quantity, i.PriceAtSale })
+            .GroupBy(x => new { x.OrderDate.Year, x.OrderDate.Month })
+            .Select(g => new
+            {
+                Month        = $"{g.Key.Year}-{g.Key.Month:D2}",
+                TotalRevenue = g.Sum(x => x.Quantity * x.PriceAtSale)
+            })
+            .OrderBy(x => x.Month)
+            .Cast<object>()
+            .ToListAsync();
+    }
+
+    // ── Task 11: Search books by keyword in title (case-insensitive) ──────────
+    public async Task<List<Book>> SearchBooksByTitleAsync(string keyword)
+    {
+        return await _db.Books
+            .AsNoTracking()
+            .Include(b => b.Author)
+            .Include(b => b.Category)
+            .Where(b => EF.Functions.Like(b.Title, $"%{keyword}%"))
+            .ToListAsync();
+    }
+
+    // ── Task 12: Paginated books list ────────────────────────────────────────
+    public async Task<(List<Book> Items, int TotalCount)> GetBooksPaginatedAsync(int page, int pageSize)
+    {
+        var query = _db.Books
+            .AsNoTracking()
+            .Include(b => b.Author)
+            .Include(b => b.Category)
+            .OrderBy(b => b.Title);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, total);
+    }
+}
