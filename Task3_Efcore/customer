@@ -1,0 +1,15 @@
+namespace BookStoreEF.Models;
+
+public class Customer
+{
+    public int    Id        { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName  { get; set; } = string.Empty;
+    public string Email     { get; set; } = string.Empty;
+    public string? City     { get; set; }
+    public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+
+    public string FullName => $"{FirstName} {LastName}";
+
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
+}
