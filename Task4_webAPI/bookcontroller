@@ -1,0 +1,65 @@
+using BookStoreAPI.Models.DTOs;
+using BookStoreAPI.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BookStoreAPI.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Produces("application/json")]
+public class BooksController : ControllerBase
+{
+    private readonly IBookService _bookService;
+
+    public BooksController(IBookService bookService) => _bookService = bookService;
+
+    /// <summary>Browse books with search, filter, and pagination.</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<BookDto>), 200)]
+    public async Task<IActionResult> GetBooks([FromQuery] BookFilterRequest filter)
+        => Ok(await _bookService.GetBooksAsync(filter));
+
+    /// <summary>Get book details by ID.</summary>
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(BookDetailDto), 200)]
+    [ProducesResponseType(typeof(ApiError), 404)]
+    public async Task<IActionResult> GetBook(int id)
+    {
+        var book = await _bookService.GetByIdAsync(id);
+        return book is null ? NotFound(new ApiError($"Book with ID {id} not found.")) : Ok(book);
+    }
+
+    /// <summary>Create a new book. Admin only.</summary>
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(BookDto), 201)]
+    [ProducesResponseType(typeof(ApiError), 400)]
+    public async Task<IActionResult> CreateBook([FromBody] BookCreateRequest req)
+    {
+        var book = await _bookService.CreateAsync(req);
+        return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
+    }
+
+    /// <summary>Update a book. Admin only.</summary>
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(BookDto), 200)]
+    [ProducesResponseType(typeof(ApiError), 404)]
+    public async Task<IActionResult> UpdateBook(int id, [FromBody] BookUpdateRequest req)
+    {
+        var book = await _bookService.UpdateAsync(id, req);
+        return book is null ? NotFound(new ApiError($"Book with ID {id} not found.")) : Ok(book);
+    }
+
+    /// <summary>Delete a book. Admin only.</summary>
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(typeof(ApiError), 404)]
+    public async Task<IActionResult> DeleteBook(int id)
+    {
+        var deleted = await _bookService.DeleteAsync(id);
+        return deleted ? NoContent() : NotFound(new ApiError($"Book with ID {id} not found."));
+    }
+}
