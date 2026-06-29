@@ -1,0 +1,79 @@
+using BookStoreEF.Data;
+using BookStoreEF.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace BookStoreEF.Services;
+
+public class BookService
+{
+    private readonly BookStoreContext _db;
+
+    public BookService(BookStoreContext db) => _db = db;
+
+    // ── Task 13: Add ─────────────────────────────────────────────────────────
+    public async Task<Book> AddBookAsync(Book book)
+    {
+        ValidateBook(book);
+        _db.Books.Add(book);
+        await _db.SaveChangesAsync();
+        return book;
+    }
+
+    // ── Task 13: Update price ─────────────────────────────────────────────────
+    public async Task UpdateBookPriceAsync(int bookId, decimal newPrice)
+    {
+        if (newPrice <= 0) throw new ArgumentException("Price must be greater than zero.");
+
+        var book = await _db.Books.FindAsync(bookId)
+            ?? throw new KeyNotFoundException($"Book ID {bookId} not found.");
+
+        book.Price = newPrice;
+        await _db.SaveChangesAsync();
+    }
+
+    // ── Task 13: Delete ───────────────────────────────────────────────────────
+    public async Task DeleteBookAsync(int bookId)
+    {
+        var book = await _db.Books.FindAsync(bookId)
+            ?? throw new KeyNotFoundException($"Book ID {bookId} not found.");
+
+        bool hasSales = await _db.OrderItems.AnyAsync(i => i.BookId == bookId);
+        if (hasSales)
+            throw new InvalidOperationException("Cannot delete a book that has sales records.");
+
+        _db.Books.Remove(book);
+        await _db.SaveChangesAsync();
+    }
+
+    // ── Task 14: N+1 Problem FIXED ────────────────────────────────────────────
+    // BAD (N+1):  var books = db.Books.ToList();
+    //             foreach (var b in books) Console.WriteLine(b.Author.FirstName); // N extra queries!
+    //
+    // FIXED (single query with Include):
+    public async Task<List<Book>> GetAllBooksWithDetailsAsync()
+    {
+        return await _db.Books
+            .AsNoTracking()
+            .Include(b => b.Author)     // joined in ONE query
+            .Include(b => b.Category)   // joined in ONE query
+            .OrderBy(b => b.Title)
+            .ToListAsync();
+    }
+
+    // ── Task 15: Read-only queries skip change tracking ───────────────────────
+    public async Task<List<Book>> GetBooksReadOnlyAsync()
+    {
+        return await _db.Books
+            .AsNoTracking()   // EF won't track these — more efficient for read-only
+            .Include(b => b.Author)
+            .Include(b => b.Category)
+            .ToListAsync();
+    }
+
+    private static void ValidateBook(Book book)
+    {
+        if (string.IsNullOrWhiteSpace(book.Title))  throw new ArgumentException("Title is required.");
+        if (book.Price <= 0)  throw new ArgumentException("Price must be greater than zero.");
+        if (book.Stock < 0)   throw new ArgumentException("Stock cannot be negative.");
+    }
+}
