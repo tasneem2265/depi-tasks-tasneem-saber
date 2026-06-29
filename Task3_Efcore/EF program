@@ -1,0 +1,110 @@
+using BookStoreEF.Data;
+using BookStoreEF.Models;
+using BookStoreEF.Queries;
+using BookStoreEF.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+var config = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false)
+    .Build();
+
+var services = new ServiceCollection();
+
+services.AddDbContext<BookStoreContext>(options =>
+    options.UseSqlServer(config.GetConnectionString("BookStoreDb")));
+
+services.AddScoped<BookService>();
+services.AddScoped<BookStoreQueries>();
+
+var provider = services.BuildServiceProvider();
+
+using var scope = provider.CreateScope();
+var db      = scope.ServiceProvider.GetRequiredService<BookStoreContext>();
+var bookSvc = scope.ServiceProvider.GetRequiredService<BookService>();
+var queries = scope.ServiceProvider.GetRequiredService<BookStoreQueries>();
+
+// Task 2: Apply pending migrations automatically
+await db.Database.MigrateAsync();
+
+// Task 3: Seed on first run
+await DbSeeder.SeedAsync(db);
+
+Console.WriteLine("═══════════════════════════════════════════");
+Console.WriteLine("   📚  BookStore EF Core — Query Runner");
+Console.WriteLine("═══════════════════════════════════════════\n");
+
+// Task 4: Books with category and author
+Console.WriteLine("── Task 4: Books with Author & Category ──");
+var books = await queries.GetBooksWithCategoryAndAuthorAsync();
+foreach (var b in books) Console.WriteLine($"  {b}");
+
+// Task 5: Top 5 best-sellers
+Console.WriteLine("\n── Task 5: Top 5 Best-Selling Books ──");
+var top5 = await queries.GetTop5BestSellingAsync();
+foreach (var b in top5) Console.WriteLine($"  {b}");
+
+// Task 6: Customers with purchase count
+Console.WriteLine("\n── Task 6: Customer Purchase Count ──");
+var customerStats = await queries.GetCustomerPurchaseCountAsync();
+foreach (var c in customerStats) Console.WriteLine($"  {c}");
+
+// Task 7: Categories with > 5 books
+Console.WriteLine("\n── Task 7: Categories with > 5 Books ──");
+var cats = await queries.GetCategoriesWithMoreThan5BooksAsync();
+foreach (var c in cats) Console.WriteLine($"  {c}");
+
+// Task 8: Books above average price
+Console.WriteLine("\n── Task 8: Books Above Average Price ──");
+var aboveAvg = await queries.GetBooksAboveAveragePriceAsync();
+foreach (var b in aboveAvg) Console.WriteLine($"  {b}");
+
+// Task 9: Customers with no purchases
+Console.WriteLine("\n── Task 9: Customers With No Purchases ──");
+var noPurchase = await queries.GetCustomersWithNoPurchasesAsync();
+foreach (var c in noPurchase) Console.WriteLine($"  {c}");
+
+// Task 10: Monthly revenue
+Console.WriteLine("\n── Task 10: Monthly Revenue ──");
+var revenue = await queries.GetMonthlyRevenueAsync();
+foreach (var r in revenue) Console.WriteLine($"  {r}");
+
+// Task 11: Search by keyword
+Console.WriteLine("\n── Task 11: Search 'clean' ──");
+var searchResult = await queries.SearchBooksByTitleAsync("clean");
+foreach (var b in searchResult) Console.WriteLine($"  [{b.Id}] {b.Title}");
+
+// Task 12: Pagination
+Console.WriteLine("\n── Task 12: Page 1 (5 per page) ──");
+var (page1, total) = await queries.GetBooksPaginatedAsync(page: 1, pageSize: 5);
+Console.WriteLine($"  Total books: {total}");
+foreach (var b in page1) Console.WriteLine($"  {b.Title}");
+
+// Task 13: Add / Update / Delete
+Console.WriteLine("\n── Task 13: Add → Update Price → Delete ──");
+var newBook = await bookSvc.AddBookAsync(new Book
+{
+    Title = "Test Book", Format = "Ebook", Price = 29.99m,
+    Stock = 10, AuthorId = 1, CategoryId = 1
+});
+Console.WriteLine($"  Added: [{newBook.Id}] {newBook.Title}");
+
+await bookSvc.UpdateBookPriceAsync(newBook.Id, 24.99m);
+Console.WriteLine($"  Price updated to $24.99");
+
+await bookSvc.DeleteBookAsync(newBook.Id);
+Console.WriteLine($"  Deleted book ID {newBook.Id}");
+
+// Task 14: N+1 fixed — single query with Include
+Console.WriteLine("\n── Task 14: N+1 Fixed — all books in one query ──");
+var allBooks = await bookSvc.GetAllBooksWithDetailsAsync();
+Console.WriteLine($"  Loaded {allBooks.Count} books with author & category in 1 query.");
+
+// Task 15: AsNoTracking for read-only
+Console.WriteLine("\n── Task 15: Read-only (AsNoTracking) ──");
+var readOnly = await bookSvc.GetBooksReadOnlyAsync();
+Console.WriteLine($"  Loaded {readOnly.Count} books without change tracking.");
+
+Console.WriteLine("\n✔  All tasks completed successfully!");
