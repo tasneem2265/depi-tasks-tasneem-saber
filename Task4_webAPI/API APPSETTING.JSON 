@@ -1,0 +1,21 @@
+{
+  "ConnectionStrings": {
+    "BookStoreDb": "Server=(localdb)\\mssqllocaldb;Database=BookStoreAPIDB;Trusted_Connection=True;MultipleActiveResultSets=true"
+  },
+  "Jwt": {
+    "Key": "YourSuperSecretKey_MustBe32CharsMin!!",
+    "Issuer": "BookStoreAPI",
+    "Audience": "BookStoreClients",
+    "ExpiryInMinutes": 60
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "Cors": {
+    "AllowedOrigins": [ "http://localhost:3000", "http://localhost:4200", "http://localhost:5173" ]
+  }
+}
