@@ -1,1 +1,22 @@
-.
+@model List<CinemaBooking.Models.Cinema>
+@{
+    ViewData["Title"] = "Cinemas";
+}
+
+<h1 class="mb-4">Our Cinemas</h1>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    @foreach (var cinema in Model)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">@cinema.Name</h5>
+                    <p class="card-text text-muted">@cinema.Address</p>
+                    <p class="card-text small">@cinema.Halls.Count hall(s)</p>
+                    <a asp-action="Details" asp-route-id="@cinema.Id" class="btn btn-outline-primary">View Showtimes</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
