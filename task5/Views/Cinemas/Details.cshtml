@@ -1,1 +1,46 @@
-.
+@model CinemaBooking.Models.Cinema
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<h1>@Model.Name</h1>
+<p class="text-muted">@Model.Address</p>
+
+@foreach (var hall in Model.Halls)
+{
+    <h4 class="mt-4">@hall.Name <small class="text-muted">(@hall.SeatCapacity seats)</small></h4>
+
+    @if (!hall.Showtimes.Any())
+    {
+        <p class="text-muted">No upcoming showtimes in this hall.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Movie</th>
+                        <th>Date &amp; Time</th>
+                        <th>Price</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in hall.Showtimes.OrderBy(s => s.StartTime))
+                    {
+                        <tr>
+                            <td>@s.Movie.Title</td>
+                            <td>@s.StartTime.ToString("dd MMM yyyy - hh:mm tt")</td>
+                            <td>@s.TicketPrice.ToString("C")</td>
+                            <td>
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@s.MovieId"
+                                   class="btn btn-sm btn-outline-primary">Details</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
