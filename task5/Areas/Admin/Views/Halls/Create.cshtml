@@ -1,1 +1,36 @@
-.
+@model CinemaBooking.Models.ViewModels.HallFormViewModel
+@{ ViewData["Title"] = "Create Hall"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Create Hall</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Back</a>
+</div>
+
+<div class="card shadow-sm" style="max-width:500px">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="mb-3">
+                <label asp-for="CinemaId" class="form-label"></label>
+                <select asp-for="CinemaId" class="form-select"
+                        asp-items="@(new SelectList(Model.AllCinemas, "Id", "Name"))">
+                    <option value="">-- Select Cinema --</option>
+                </select>
+                <span asp-validation-for="CinemaId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="SeatCapacity" class="form-label"></label>
+                <input asp-for="SeatCapacity" type="number" class="form-control" />
+                <span asp-validation-for="SeatCapacity" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-danger">Create</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
