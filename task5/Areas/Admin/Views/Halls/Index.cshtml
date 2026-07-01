@@ -1,1 +1,29 @@
-.
+@model List<CinemaBooking.Models.Hall>
+@{ ViewData["Title"] = "Halls"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Halls</h2>
+    <a asp-action="Create" class="btn btn-danger">+ New Hall</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr><th>Cinema</th><th>Hall</th><th>Capacity</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var h in Model)
+            {
+                <tr>
+                    <td>@h.Cinema.Name</td>
+                    <td>@h.Name</td>
+                    <td>@h.SeatCapacity</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@h.Id" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@h.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
