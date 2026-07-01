@@ -1,1 +1,62 @@
-.
+/* General */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Navbar */
+.navbar-brand {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Movie cards */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Admin sidebar */
+.sidebar {
+    border-right: 1px solid #dee2e6;
+}
+
+.sidebar .nav-link {
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 2px;
+    transition: background-color 0.15s;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #e9ecef;
+}
+
+.sidebar .nav-link.active {
+    background-color: #ffe5e5;
+}
+
+/* Footer */
+.footer {
+    background-color: #f1f1f1;
+    font-size: 0.85rem;
+}
+
+/* Poster placeholder */
+img[src="/images/no-poster.png"] {
+    background-color: #dee2e6;
+    object-fit: contain;
+    padding: 20px;
+}
+
+/* Responsive tables */
+@media (max-width: 576px) {
+    .table-responsive table {
+        font-size: 0.85rem;
+    }
+}
