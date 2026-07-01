@@ -1,1 +1,45 @@
-.
+@model CinemaBooking.Models.ViewModels.ShowtimeFormViewModel
+@{ ViewData["Title"] = "Create Showtime"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Create Showtime</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Back</a>
+</div>
+
+<div class="card shadow-sm" style="max-width:500px">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="mb-3">
+                <label asp-for="MovieId" class="form-label"></label>
+                <select asp-for="MovieId" class="form-select"
+                        asp-items="@(new SelectList(Model.AllMovies, "Id", "Title"))">
+                    <option value="">-- Select Movie --</option>
+                </select>
+                <span asp-validation-for="MovieId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="HallId" class="form-label"></label>
+                <select asp-for="HallId" class="form-select"
+                        asp-items="@(new SelectList(Model.AllHalls, "Id", "Name"))">
+                    <option value="">-- Select Hall --</option>
+                </select>
+                <span asp-validation-for="HallId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="StartTime" class="form-label"></label>
+                <input asp-for="StartTime" type="datetime-local" class="form-control"
+                       value="@Model.StartTime.ToString("yyyy-MM-ddTHH:mm")" />
+                <span asp-validation-for="StartTime" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TicketPrice" class="form-label"></label>
+                <input asp-for="TicketPrice" type="number" step="0.01" class="form-control" />
+                <span asp-validation-for="TicketPrice" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-danger">Create</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
