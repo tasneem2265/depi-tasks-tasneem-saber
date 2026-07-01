@@ -1,1 +1,44 @@
-.
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h2 class="mb-4">Dashboard</h2>
+
+<div class="row g-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-white bg-primary shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Movies</h5>
+                <p class="display-5">@ViewBag.MoviesCount</p>
+                <a asp-area="Admin" asp-controller="Movies" asp-action="Index" class="btn btn-light btn-sm">Manage</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-white bg-success shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Cinemas</h5>
+                <p class="display-5">@ViewBag.CinemasCount</p>
+                <a asp-area="Admin" asp-controller="Cinemas" asp-action="Index" class="btn btn-light btn-sm">Manage</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-white bg-warning shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Upcoming Showtimes</h5>
+                <p class="display-5">@ViewBag.ShowtimesCount</p>
+                <a asp-area="Admin" asp-controller="Showtimes" asp-action="Index" class="btn btn-light btn-sm">Manage</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-white bg-danger shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Confirmed Bookings</h5>
+                <p class="display-5">@ViewBag.BookingsCount</p>
+                <a asp-area="Admin" asp-controller="Bookings" asp-action="Index" class="btn btn-light btn-sm">View All</a>
+            </div>
+        </div>
+    </div>
+</div>
