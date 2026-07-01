@@ -1,1 +1,43 @@
-.
+@model List<Movie>
+@{
+    ViewData["Title"] = "Manage Movies";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Movies</h2>
+    <a asp-action="Create" class="btn btn-danger">+ New Movie</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Poster</th>
+                <th>Title</th>
+                <th>Duration</th>
+                <th>Categories</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td>
+                        <img src="@(string.IsNullOrEmpty(m.PosterPath) ? "/images/no-poster.png" : m.PosterPath)"
+                             style="width:60px;height:80px;object-fit:cover;" class="rounded" alt="poster" />
+                    </td>
+                    <td>@m.Title</td>
+                    <td>@m.DurationMinutes mins</td>
+                    <td>@string.Join(", ", m.MovieCategories.Select(mc => mc.Category.Name))</td>
+                    <td>@m.CreatedAt.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@m.Id" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@m.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
