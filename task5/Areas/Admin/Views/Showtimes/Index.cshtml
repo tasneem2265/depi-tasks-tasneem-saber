@@ -1,1 +1,45 @@
- .
+@model List<CinemaBooking.Models.Showtime>
+@{ ViewData["Title"] = "Showtimes"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Showtimes</h2>
+    <a asp-action="Create" class="btn btn-danger">+ New Showtime</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Movie</th><th>Cinema</th><th>Hall</th>
+                <th>Start Time</th><th>Price</th>
+                <th>Seats Left</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                <tr class="@(s.StartTime < DateTime.UtcNow ? "table-secondary" : "")">
+                    <td>@s.Movie.Title</td>
+                    <td>@s.Hall.Cinema.Name</td>
+                    <td>@s.Hall.Name</td>
+                    <td>@s.StartTime.ToString("dd MMM yyyy - hh:mm tt")</td>
+                    <td>@s.TicketPrice.ToString("C")</td>
+                    <td>
+                        @if (s.SeatsAvailable <= 0)
+                        {
+                            <span class="badge bg-danger">Sold out</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">@s.SeatsAvailable</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@s.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
